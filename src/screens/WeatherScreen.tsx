@@ -1,17 +1,21 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
-import { COLORS } from '../config';
+import { useTheme } from '../theme';
+import ForecastList from '../components/ForecastList';
 import { ErrorView, LoadingView } from '../components/StatusViews';
-import type { Unit, Weather } from '../types';
+import type { ForecastDay, Unit, Weather } from '../types';
 import { formatTemp, iconForCondition, titleCase } from '../utils/weather';
 import { formatTime } from '../utils/time';
 
 interface Props {
+  city: string;
   weather: Weather | null;
+  forecast: ForecastDay[];
   unit: Unit;
   loading: boolean;
-  error: string | null;
+  weatherError: string | null;
+  forecastError: string | null;
   updatedAt: Date | null;
   onRetry: () => void;
 }
@@ -23,63 +27,65 @@ interface StatProps {
 }
 
 function Stat({ icon, label, value }: StatProps): React.JSX.Element {
+  const { colors } = useTheme();
+
   return (
-    <View className="flex-1 bg-slate-900 border border-slate-800 rounded-2xl py-4 items-center">
+    <View className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-4 items-center">
       <View className="w-9 h-9 rounded-full bg-sky-500/15 items-center justify-center">
-        <Feather name={icon} size={17} color={COLORS.accent} />
+        <Feather name={icon} size={17} color={colors.accent} />
       </View>
-      <Text className="text-white text-base font-semibold mt-2">{value}</Text>
-      <Text className="text-slate-400 text-xs mt-0.5">{label}</Text>
+      <Text className="text-slate-900 dark:text-white text-base font-semibold mt-2">{value}</Text>
+      <Text className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">{label}</Text>
     </View>
   );
 }
 
-export default function WeatherScreen({
+function CurrentWeather({
   weather,
   unit,
-  loading,
-  error,
   updatedAt,
-  onRetry,
-}: Props): React.JSX.Element {
-  if (loading && !weather) return <LoadingView label="Mengambil data cuaca..." />;
-  if (error) return <ErrorView message={error} onRetry={onRetry} />;
-  if (!weather) return <LoadingView label="Menunggu data..." />;
-
+}: {
+  weather: Weather;
+  unit: Unit;
+  updatedAt: Date | null;
+}): React.JSX.Element {
+  const { colors } = useTheme();
   const other: Unit = unit === 'C' ? 'F' : 'C';
 
   return (
     <View>
-      <View className="bg-slate-900 border border-slate-800 rounded-3xl p-6 items-center">
+      <View className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 items-center">
         <View className="flex-row items-center bg-sky-500/10 border border-sky-500/25 rounded-full px-3.5 py-1.5">
-          <Feather name="map-pin" size={14} color={COLORS.accent} />
-          <Text className="text-sky-100 text-base font-semibold ml-1.5">{titleCase(weather.city)}</Text>
+          <Feather name="map-pin" size={14} color={colors.accent} />
+          <Text className="text-sky-800 dark:text-sky-100 text-base font-semibold ml-1.5">
+            {titleCase(weather.city)}
+          </Text>
         </View>
 
         <MaterialCommunityIcons
           name={iconForCondition(weather.condition)}
           size={104}
-          color={COLORS.accent}
+          color={colors.accent}
           style={{ marginTop: 18 }}
         />
 
-        <Text className="text-white text-7xl font-extrabold mt-1">{formatTemp(weather.temp, unit)}</Text>
+        <Text className="text-slate-900 dark:text-white text-7xl font-extrabold mt-1">
+          {formatTemp(weather.temp, unit)}
+        </Text>
         {weather.temp !== undefined && (
-          <Text className="text-slate-500 text-sm mt-1">
-            = {formatTemp(weather.temp, other)}
-          </Text>
+          <Text className="text-slate-500 text-sm mt-1">= {formatTemp(weather.temp, other)}</Text>
         )}
 
         <View className="flex-row items-center mt-3">
-          <MaterialCommunityIcons name="information-outline" size={16} color={COLORS.muted} />
-          <Text className="text-slate-300 text-base capitalize ml-1.5">
+          <MaterialCommunityIcons name="information-outline" size={16} color={colors.muted} />
+          <Text className="text-slate-600 dark:text-slate-300 text-base capitalize ml-1.5">
             {weather.condition ?? 'Kondisi tidak tersedia'}
           </Text>
         </View>
 
         {updatedAt && (
           <View className="flex-row items-center mt-4">
-            <Feather name="refresh-cw" size={11} color="#64748b" />
+            <Feather name="refresh-cw" size={11} color={colors.inactive} />
             <Text className="text-slate-500 text-xs ml-1.5">Diperbarui {formatTime(updatedAt)}</Text>
           </View>
         )}
@@ -100,11 +106,47 @@ export default function WeatherScreen({
       </View>
 
       {weather.temp === undefined && (
-        <Text className="text-amber-300/80 text-xs text-center mt-4 leading-5">
+        <Text className="text-amber-600 dark:text-amber-300/80 text-xs text-center mt-4 leading-5">
           Suhu belum terbaca dari respons API. Buka log terminal Expo dan cari baris "[API]" untuk
           melihat nama field yang dipakai.
         </Text>
       )}
+    </View>
+  );
+}
+
+export default function WeatherScreen({
+  city,
+  weather,
+  forecast,
+  unit,
+  loading,
+  weatherError,
+  forecastError,
+  updatedAt,
+  onRetry,
+}: Props): React.JSX.Element {
+  if (loading && !weather && forecast.length === 0) {
+    return <LoadingView label="Mengambil data cuaca..." />;
+  }
+
+  return (
+    <View>
+      {weatherError ? (
+        <ErrorView message={weatherError} onRetry={onRetry} />
+      ) : weather ? (
+        <CurrentWeather weather={weather} unit={unit} updatedAt={updatedAt} />
+      ) : null}
+
+      <View className="mt-6">
+        <ForecastList
+          city={weather?.city ?? city}
+          forecast={forecast}
+          unit={unit}
+          error={forecastError}
+          onRetry={onRetry}
+        />
+      </View>
     </View>
   );
 }

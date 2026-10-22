@@ -24,7 +24,13 @@
     },
     "plugins": [
       "expo-secure-store",
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Izinkan akses lokasi untuk menampilkan cuaca di sekitar Anda."
+        }
+      ]
     ]
   }
 }

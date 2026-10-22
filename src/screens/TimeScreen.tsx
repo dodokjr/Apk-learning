@@ -1,7 +1,7 @@
 import React from 'react';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { COLORS } from '../config';
+import { useTheme } from '../theme';
 import { useClock } from '../hooks/useClock';
 import { useWorldTime, type SyncStatus } from '../hooks/useWorldTime';
 import type { TimeZoneItem } from '../types';
@@ -15,11 +15,15 @@ interface SyncProps {
 }
 
 function SyncBadge({ status, error, syncedAt, onRetry }: SyncProps): React.JSX.Element {
+  const { colors } = useTheme();
+
   if (status === 'loading') {
     return (
       <View className="flex-row items-center justify-center mb-3">
-        <ActivityIndicator size="small" color={COLORS.accent} />
-        <Text className="text-slate-400 text-xs ml-2">Menyinkronkan dengan server...</Text>
+        <ActivityIndicator size="small" color={colors.accent} />
+        <Text className="text-slate-500 dark:text-slate-400 text-xs ml-2">
+          Menyinkronkan dengan server...
+        </Text>
       </View>
     );
   }
@@ -27,13 +31,15 @@ function SyncBadge({ status, error, syncedAt, onRetry }: SyncProps): React.JSX.E
   if (status === 'error') {
     return (
       <View className="bg-amber-500/10 border border-amber-500/30 rounded-2xl px-4 py-3 mb-3 flex-row items-center">
-        <Feather name="alert-triangle" size={18} color="#fbbf24" />
+        <Feather name="alert-triangle" size={18} color={colors.sun} />
         <View className="flex-1 mx-3">
-          <Text className="text-amber-200 text-xs font-semibold">Memakai daftar zona bawaan</Text>
-          <Text className="text-amber-200/80 text-xs mt-0.5">{error}</Text>
+          <Text className="text-amber-700 dark:text-amber-200 text-xs font-semibold">
+            Memakai daftar zona bawaan
+          </Text>
+          <Text className="text-amber-700/80 dark:text-amber-200/80 text-xs mt-0.5">{error}</Text>
         </View>
         <TouchableOpacity className="bg-amber-500/20 px-3 py-1.5 rounded-lg" onPress={onRetry}>
-          <Text className="text-amber-100 text-xs font-semibold">Coba lagi</Text>
+          <Text className="text-amber-800 dark:text-amber-100 text-xs font-semibold">Coba lagi</Text>
         </TouchableOpacity>
       </View>
     );
@@ -41,8 +47,8 @@ function SyncBadge({ status, error, syncedAt, onRetry }: SyncProps): React.JSX.E
 
   return (
     <View className="flex-row items-center justify-center mb-3">
-      <Feather name="check-circle" size={13} color="#34d399" />
-      <Text className="text-emerald-300 text-xs ml-1.5">
+      <Feather name="check-circle" size={13} color={colors.success} />
+      <Text className="text-emerald-600 dark:text-emerald-300 text-xs ml-1.5">
         Tersinkron dengan server{syncedAt ? ` · ${formatTime(syncedAt)}` : ''}
       </Text>
     </View>
@@ -50,23 +56,30 @@ function SyncBadge({ status, error, syncedAt, onRetry }: SyncProps): React.JSX.E
 }
 
 function ZoneRow({ zone, now, first }: { zone: TimeZoneItem; now: Date; first: boolean }): React.JSX.Element {
+  const { colors } = useTheme();
   const tz = zone.timeZone;
   const hour = tz ? getHour(now, tz) : getHour(now);
   const isDay = hour >= 6 && hour < 18;
   const detail = [zone.label, tz ? dayOffsetLabel(now, tz) : undefined].filter(Boolean).join(' · ');
 
   return (
-    <View className={`flex-row items-center px-4 py-3.5 ${first ? '' : 'border-t border-slate-800'}`}>
+    <View
+      className={`flex-row items-center px-4 py-3.5 ${
+        first ? '' : 'border-t border-slate-200 dark:border-slate-800'
+      }`}
+    >
       <View
-        className={`w-10 h-10 rounded-full items-center justify-center ${isDay ? 'bg-amber-400/15' : 'bg-indigo-400/15'}`}
+        className={`w-10 h-10 rounded-full items-center justify-center ${
+          isDay ? 'bg-amber-400/15' : 'bg-indigo-400/15'
+        }`}
       >
-        <Feather name={isDay ? 'sun' : 'moon'} size={18} color={isDay ? '#fbbf24' : '#a5b4fc'} />
+        <Feather name={isDay ? 'sun' : 'moon'} size={18} color={isDay ? colors.sun : colors.moon} />
       </View>
       <View className="flex-1 ml-3">
-        <Text className="text-white text-sm font-semibold">{zone.city}</Text>
+        <Text className="text-slate-900 dark:text-white text-sm font-semibold">{zone.city}</Text>
         {detail !== '' && <Text className="text-slate-500 text-xs mt-0.5">{detail}</Text>}
       </View>
-      <Text className="text-sky-400 text-xl font-bold" style={{ fontVariant: ['tabular-nums'] }}>
+      <Text className="text-sky-600 dark:text-sky-400 text-xl font-bold" style={{ fontVariant: ['tabular-nums'] }}>
         {tz ? formatTime(now, tz) : zone.text ?? '--:--'}
       </Text>
     </View>
@@ -81,13 +94,15 @@ interface GroupProps {
 }
 
 function ZoneGroup({ title, icon, zones, now }: GroupProps): React.JSX.Element {
+  const { colors } = useTheme();
+
   return (
     <View className="mt-5">
       <View className="flex-row items-center mb-2 ml-1">
-        <Feather name={icon} size={14} color={COLORS.muted} />
-        <Text className="text-slate-300 text-sm font-semibold ml-2">{title}</Text>
+        <Feather name={icon} size={14} color={colors.muted} />
+        <Text className="text-slate-600 dark:text-slate-300 text-sm font-semibold ml-2">{title}</Text>
       </View>
-      <View className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden">
+      <View className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden">
         {zones.map((zone, i) => (
           <ZoneRow key={`${zone.key}-${i}`} zone={zone} now={now} first={i === 0} />
         ))}
@@ -97,6 +112,7 @@ function ZoneGroup({ title, icon, zones, now }: GroupProps): React.JSX.Element {
 }
 
 export default function TimeScreen(): React.JSX.Element {
+  const { colors } = useTheme();
   const device = useClock();
   const sync = useWorldTime();
   const now = new Date(device.getTime() + sync.offsetMs);
@@ -107,20 +123,20 @@ export default function TimeScreen(): React.JSX.Element {
     <View>
       <SyncBadge status={sync.status} error={sync.error} syncedAt={sync.syncedAt} onRetry={sync.reload} />
 
-      <View className="bg-slate-900 border border-slate-800 rounded-3xl p-6 items-center">
+      <View className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 items-center">
         <View className="flex-row items-center bg-sky-500/10 border border-sky-500/25 rounded-full px-3.5 py-1.5">
-          <Feather name={isDay ? 'sun' : 'moon'} size={14} color={COLORS.accent} />
-          <Text className="text-sky-100 text-sm font-semibold ml-1.5">{greeting(hour)}</Text>
+          <Feather name={isDay ? 'sun' : 'moon'} size={14} color={colors.accent} />
+          <Text className="text-sky-800 dark:text-sky-100 text-sm font-semibold ml-1.5">{greeting(hour)}</Text>
         </View>
         <Text
-          className="text-white text-6xl font-extrabold mt-4"
+          className="text-slate-900 dark:text-white text-6xl font-extrabold mt-4"
           style={{ fontVariant: ['tabular-nums'] }}
         >
           {formatTime(now, undefined, true)}
         </Text>
         <View className="flex-row items-center mt-2">
-          <Feather name="calendar" size={13} color={COLORS.muted} />
-          <Text className="text-slate-400 text-sm ml-1.5">{formatFullDate(now)}</Text>
+          <Feather name="calendar" size={13} color={colors.muted} />
+          <Text className="text-slate-500 dark:text-slate-400 text-sm ml-1.5">{formatFullDate(now)}</Text>
         </View>
       </View>
 

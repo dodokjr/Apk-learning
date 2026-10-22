@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { TextInput, TouchableOpacity, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { COLORS } from '../config';
+import { useTheme } from '../theme';
 
 interface Props {
   onSearch: (city: string) => void;
 }
 
 export default function SearchBar({ onSearch }: Props): React.JSX.Element {
+  const { colors } = useTheme();
   const [text, setText] = useState<string>('');
 
   const submit = (): void => {
@@ -16,12 +17,12 @@ export default function SearchBar({ onSearch }: Props): React.JSX.Element {
   };
 
   return (
-    <View className="flex-row items-center bg-slate-900 border border-slate-800 rounded-2xl pl-4 pr-1.5 py-1.5 mb-5">
-      <Feather name="map-pin" size={16} color={COLORS.muted} />
+    <View className="flex-row items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl pl-4 pr-1.5 py-1.5">
+      <Feather name="map-pin" size={16} color={colors.muted} />
       <TextInput
-        className="flex-1 text-white text-base px-3 py-2"
-        placeholder="Cari kota, mis. Surabaya"
-        placeholderTextColor="#64748b"
+        className="flex-1 text-slate-900 dark:text-white text-base px-3 py-2"
+        placeholder="Cari kota"
+        placeholderTextColor={colors.placeholder}
         value={text}
         onChangeText={setText}
         onSubmitEditing={submit}
